@@ -203,30 +203,52 @@ main() {
         print_message "⚠️  API server failed to start. Check api.log for errors." "$YELLOW"
     fi
 
+    # Extract API key for display
+    api_key=$(grep "^API_KEY=" .env | cut -d'=' -f2)
+
     # Final summary
     print_header "✨ Setup Complete!"
 
     echo ""
-    echo "Your Telegram RAG Knowledge Base is ready!"
+    print_message "🎉 Your Telegram RAG Knowledge Base is ready!" "$GREEN"
     echo ""
-    echo "📋 Next steps:"
-    echo "  1. Review and update .env file if needed"
+
+    print_message "🌐 Access your services:" "$BLUE"
+    echo "  📊 Weaviate Database UI:    http://localhost:3000"
+    echo "  🚀 FastAPI Documentation:  http://localhost:8000/docs"
+    echo "  🔧 Weaviate REST API:      http://localhost:8080"
+    echo "  📈 API Health Check:       http://localhost:8000/health"
+    echo ""
+
+    print_message "🔑 Your API Key:" "$BLUE"
+    if [ -n "$api_key" ]; then
+        echo "  $api_key"
+        echo ""
+        print_message "⚠️  Save this API key securely - you'll need it for API requests!" "$YELLOW"
+    else
+        print_message "  No API key found. Check your .env file." "$RED"
+    fi
+    echo ""
+
+    print_message "📋 Next steps:" "$BLUE"
+    echo "  1. Open the Weaviate UI at http://localhost:3000 to explore your database"
     echo "  2. Add your Telegram export as result.json (if not done)"
     echo "  3. Run 'python ingestion.py' to process data"
-    echo "  4. Access the API at http://localhost:8000"
-    echo "  5. Configure your RAG integration with the API endpoint"
+    echo "  4. Test searches at http://localhost:8000/docs"
+    echo "  5. Use the API key above for authentication"
     echo ""
-    echo "📚 Documentation:"
-    echo "  - README.md - General documentation"
-    echo "  - docs/ - Detailed guides"
-    echo "  - claude_docs/ - Development documentation"
+
+    print_message "📚 Documentation & Testing:" "$BLUE"
+    echo "  - README.md               # Complete setup guide"
+    echo "  - http://localhost:8000/docs  # Interactive API testing"
+    echo "  - python test_rag.py     # Command-line testing"
     echo ""
-    echo "🛠️  Useful commands:"
+
+    print_message "🛠️  Management commands:" "$BLUE"
     echo "  - ./stop.sh              # Stop all services"
     echo "  - docker-compose ps      # Check service status"
-    echo "  - python test_rag.py     # Test the RAG system"
-    echo "  - python api.py          # Start API server"
     echo "  - docker-compose logs -f # View logs"
+    echo "  - python config.py       # Verify configuration"
     echo ""
 
     print_message "Happy knowledge building! 🚀" "$GREEN"
