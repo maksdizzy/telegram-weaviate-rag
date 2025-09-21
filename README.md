@@ -16,6 +16,7 @@ A production-ready Retrieval-Augmented Generation (RAG) system that transforms T
 - 📦 **File Upload**: Upload multiple chat exports with merge functionality
 - 🔄 **Incremental Updates**: Smart ingestion of new data without reprocessing
 - 📊 **Scalable**: Handles millions of messages efficiently with Weaviate
+- 🌐 **Web UI**: Modern web interface for browsing and querying your data
 - 🐳 **Docker Ready**: Complete containerization with docker-compose
 - 🔒 **Security**: Environment-based configuration, no hardcoded secrets
 
@@ -80,7 +81,7 @@ cd telegram-weaviate-rag
 ### Option 2: Docker Compose Only
 
 ```bash
-# Start all services
+# Start all services (includes Weaviate + UI)
 docker-compose up -d
 
 # Check status
@@ -88,6 +89,8 @@ docker-compose ps
 
 # View logs
 docker-compose logs -f weaviate
+
+# Access Weaviate UI at http://localhost:3000
 ```
 
 ### Option 3: Manual Local Development
@@ -283,6 +286,24 @@ df -h ~/.ollama
 ollama pull nomic-embed-text  # Uses ~1GB RAM
 # Instead of mxbai-embed-large  # Uses ~2GB RAM
 ```
+
+## 🌐 Web Interface
+
+Once your services are running, you can access the **modern Weaviate UI** at:
+
+**http://localhost:3000**
+
+The web interface provides:
+- 📊 **Schema Visualization**: Browse your data structure and properties
+- 🔍 **Query Builder**: Interactive query construction with syntax highlighting
+- 📈 **Database Statistics**: Monitor collection sizes and performance metrics
+- 🔎 **Data Explorer**: Browse and search your stored conversations
+- ⚡ **Real-time Testing**: Test search queries and view results instantly
+
+### Alternative Access Methods
+
+- **Weaviate REST API**: http://localhost:8080 (direct database access)
+- **RAG API Documentation**: http://localhost:8000/docs (when API server is running)
 
 ## 📖 Usage
 

@@ -36,6 +36,18 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  # Weaviate UI (Modern web interface)
+  weaviate-ui:
+    image: naaive/weaviate-ui:latest
+    ports:
+      - "3000:7777"
+    environment:
+      WEAVIATE_URL: http://weaviate:8080
+    depends_on:
+      - weaviate
+    networks:
+      - rag-network
+
 volumes:
   weaviate_data:
     driver: local
