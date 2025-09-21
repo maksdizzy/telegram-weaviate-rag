@@ -55,7 +55,15 @@ main() {
     if [ ! -f .env ]; then
         cp .env.example .env
         print_message "Created .env file from template" "$GREEN"
-        print_message "⚠️  Please edit .env file with your settings" "$YELLOW"
+
+        # Generate secure API key
+        if command_exists openssl; then
+            api_key=$(openssl rand -hex 32)
+            sed -i "s/API_KEY=.*/API_KEY=$api_key/" .env
+            print_message "✅ Generated secure API key" "$GREEN"
+        else
+            print_message "⚠️  OpenSSL not found. Please manually set API_KEY in .env" "$YELLOW"
+        fi
 
         # Ask user for provider choice
         echo ""

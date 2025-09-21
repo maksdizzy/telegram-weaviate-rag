@@ -116,10 +116,10 @@ class Settings(BaseSettings):
     @field_validator("telegram_json_path", mode="before")
     @classmethod
     def validate_json_path(cls, v):
-        """Ensure the Telegram JSON file exists"""
+        """Convert to Path object (file existence checked when needed)"""
         path = Path(v)
-        if not path.exists():
-            raise ValueError(f"Telegram JSON file not found: {path}")
+        # Don't validate existence during config loading - only when actually needed
+        # This allows the system to start without requiring result.json to exist
         return path
 
     @field_validator("thread_time_window_minutes")

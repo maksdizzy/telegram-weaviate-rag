@@ -71,6 +71,13 @@ class ThreadDetector:
         Returns:
             List of parsed TelegramMessage objects
         """
+        # Check if file exists
+        if not json_path.exists():
+            raise FileNotFoundError(
+                f"Telegram JSON file not found: {json_path}\n"
+                f"Please export your Telegram chat to JSON format and save it as '{json_path}'"
+            )
+
         console.print(f"[cyan]Loading messages from: {json_path}[/cyan]")
 
         with open(json_path, 'r', encoding='utf-8') as f:
