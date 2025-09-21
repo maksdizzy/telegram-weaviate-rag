@@ -1,56 +1,83 @@
 # 📚 Telegram RAG Knowledge Base
 
-A production-ready Retrieval-Augmented Generation (RAG) system that transforms Telegram chat exports into a searchable knowledge base. Integrates seamlessly with Dify and supports multiple embedding providers.
+A production-ready Retrieval-Augmented Generation (RAG) system that transforms Telegram chat exports into a searchable knowledge base with FastAPI interface.
+
+[![Production Ready](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)](https://github.com/maksdizzy/telegram-weaviate-rag)
+[![Python 3.8+](https://img.shields.io/badge/Python-3.8%2B-blue)](https://python.org)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://docker.com)
+[![FastAPI](https://img.shields.io/badge/FastAPI-Latest-green)](https://fastapi.tiangolo.com)
 
 ## ✨ Features
 
-- 🔍 **Hybrid Search**: Combines semantic and keyword search for optimal results
-- 🧵 **Smart Threading**: Groups related messages into conversation threads
-- 🤖 **Multi-Provider Support**: Works with Ollama, OpenAI, and OpenRouter
-- 🔌 **Dify Integration**: Ready-to-use external knowledge base API
-- 📊 **Scalable**: Handles millions of messages efficiently
-- 🐳 **Docker Ready**: One-command deployment with Docker Compose
+- 🔍 **Hybrid Search**: Combines semantic vector search with keyword matching
+- 🧵 **Smart Threading**: Automatically groups related messages into conversation threads
+- 🤖 **Multi-Provider Support**: Works with Ollama, OpenAI, and OpenRouter embeddings
+- 🚀 **FastAPI REST API**: Production-ready API with authentication and error handling
+- 📦 **File Upload**: Upload multiple chat exports with merge functionality
+- 🔄 **Incremental Updates**: Smart ingestion of new data without reprocessing
+- 📊 **Scalable**: Handles millions of messages efficiently with Weaviate
+- 🐳 **Docker Ready**: Complete containerization with docker-compose
+- 🔒 **Security**: Environment-based configuration, no hardcoded secrets
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Docker & Docker Compose
-- Python 3.8+ (for local development)
-- Telegram chat export (JSON format)
-- At least 4GB RAM
+- **Docker & Docker Compose**
+- **Python 3.8+** (for local development)
+- **Telegram chat export** (JSON format)
+- **At least 4GB RAM**
+- **API key** (for OpenAI/OpenRouter) or **Ollama** (for local embeddings)
 
 ### One-Command Setup
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/telegram-rag
-cd telegram-rag
+git clone https://github.com/maksdizzy/telegram-weaviate-rag.git
+cd telegram-weaviate-rag
 
 # Copy and configure environment variables
 cp .env.example .env
-# Edit .env with your settings
+# Edit .env with your settings (see Configuration section)
 
-# Start everything with Docker
-docker-compose up -d
-
-# Run the setup script
+# Run automated setup
 ./setup.sh
+
+# Start the API server
+python api.py
 ```
+
+The setup script will:
+- ✅ Create Python virtual environment
+- ✅ Install all dependencies
+- ✅ Start Weaviate with Docker
+- ✅ Initialize database schema
+- ✅ Validate your configuration
 
 ## 📖 Table of Contents
 
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage](#usage)
-- [Dify Integration](#dify-integration)
 - [API Reference](#api-reference)
 - [Architecture](#architecture)
+- [Performance](#performance)
 - [Troubleshooting](#troubleshooting)
 
-## Installation
+## 📦 Installation
 
-### Option 1: Docker (Recommended)
+### Option 1: Automated Setup (Recommended)
+
+```bash
+# Clone and enter directory
+git clone https://github.com/maksdizzy/telegram-weaviate-rag.git
+cd telegram-weaviate-rag
+
+# Run the setup script
+./setup.sh
+```
+
+### Option 2: Docker Compose Only
 
 ```bash
 # Start all services
@@ -60,10 +87,10 @@ docker-compose up -d
 docker-compose ps
 
 # View logs
-docker-compose logs -f
+docker-compose logs -f weaviate
 ```
 
-### Option 2: Local Development
+### Option 3: Manual Local Development
 
 ```bash
 # Create virtual environment
@@ -78,129 +105,140 @@ docker-compose up -d weaviate
 
 # Configure environment
 cp .env.example .env
-# Edit .env file
+# Edit .env file with your settings
 
-# Run setup
-python setup.py
+# Initialize schema
+python schema.py
 ```
 
-## Configuration
+## ⚙️ Configuration
 
 ### Environment Variables
 
 Create a `.env` file with your configuration:
 
 ```env
+# Core Settings
+API_KEY=your_secure_random_api_key_here
+KNOWLEDGE_ID=telegram-rag
+BATCH_SIZE=100
+
 # Weaviate Configuration
 WEAVIATE_HOST=localhost
 WEAVIATE_PORT=8080
 WEAVIATE_SCHEME=http
 
 # Embedding Provider (choose one)
-EMBEDDING_PROVIDER=ollama  # Options: ollama, openai, openrouter
+EMBEDDING_PROVIDER=openai  # Options: ollama, openai, openrouter
 
-# Ollama Configuration (if using Ollama)
+# OpenAI Configuration (recommended for production)
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_EMBED_MODEL=text-embedding-3-small
+OPENAI_GENERATION_MODEL=gpt-4-turbo-preview
+
+# Ollama Configuration (for local/free embeddings)
 OLLAMA_HOST=localhost
 OLLAMA_PORT=11434
 OLLAMA_EMBED_MODEL=nomic-embed-text
 OLLAMA_GENERATION_MODEL=llama3.2
 
-# OpenAI Configuration (if using OpenAI)
-OPENAI_API_KEY=your_api_key_here
-OPENAI_EMBED_MODEL=text-embedding-3-small
-OPENAI_GENERATION_MODEL=gpt-4-turbo-preview
-
-# OpenRouter Configuration (if using OpenRouter)
-OPENROUTER_API_KEY=your_api_key_here
+# OpenRouter Configuration (for multiple providers)
+OPENROUTER_API_KEY=your_openrouter_api_key_here
 OPENROUTER_EMBED_MODEL=openai/text-embedding-3-small
 OPENROUTER_GENERATION_MODEL=anthropic/claude-3-haiku
 
-# Application Settings
-BATCH_SIZE=100
-COLLECTION_NAME=TelegramMessages
+# Thread Detection Settings
 THREAD_TIME_WINDOW_MINUTES=5
-SEARCH_ALPHA=0.75
+THREAD_MIN_MESSAGES=1
+THREAD_MAX_MESSAGES=50
 
-# Dify API Settings
-DIFY_API_KEY=your_secure_api_key_here
-DIFY_API_PORT=8000
+# Search Settings
+SEARCH_ALPHA=0.75  # 0=keyword only, 1=vector only
+SEARCH_LIMIT=5
 ```
 
-### Supported Embedding Providers
+### Embedding Provider Comparison
 
-| Provider | Models | Cost | Speed | Quality |
-|----------|--------|------|-------|---------|
-| **Ollama** | nomic-embed-text, mxbai-embed-large | Free (local) | Fast | Good |
-| **OpenAI** | text-embedding-3-small, text-embedding-3-large | Paid | Fast | Excellent |
-| **OpenRouter** | Multiple providers | Paid | Variable | Variable |
+| Provider | Models | Cost | Speed | Quality | Notes |
+|----------|--------|------|-------|---------|--------|
+| **OpenAI** | text-embedding-3-small/large | Paid | Fast | Excellent | Recommended for production |
+| **Ollama** | nomic-embed-text, mxbai-embed-large | Free | Fast | Good | Great for local/private use |
+| **OpenRouter** | Multiple providers | Paid | Variable | Variable | Good for experimentation |
 
-## Usage
+## 📖 Usage
 
-### 1. Prepare Your Data
+### 1. Prepare Your Telegram Data
 
 Export your Telegram chat:
-1. Open Telegram Desktop
-2. Settings → Advanced → Export Telegram Data
-3. Select "JSON" format
-4. Save as `result.json` in the project directory
+1. Open **Telegram Desktop**
+2. Go to **Settings → Advanced → Export Telegram Data**
+3. Select **JSON** format
+4. Choose your chat(s)
+5. Save as `result.json` in the project directory
 
-### 2. Process and Ingest Data
+### 2. Upload and Process Data
 
+#### Option A: File Upload API
 ```bash
-# Process messages into threads
+# Upload your first chat export
+curl -X POST "http://localhost:8000/upload" \
+  -H "Authorization: Bearer your_api_key" \
+  -F "file=@result.json" \
+  -F "chat_name=MyMainChat"
+
+# Upload additional chats with merge
+curl -X POST "http://localhost:8000/upload" \
+  -H "Authorization: Bearer your_api_key" \
+  -F "file=@another_chat.json" \
+  -F "chat_name=WorkChat" \
+  -F "merge=true"
+```
+
+#### Option B: Manual Processing
+```bash
+# Process messages into conversation threads
 python thread_detector.py
 
-# Ingest into Weaviate
+# Ingest into Weaviate vector database
 python ingestion.py
 
-# Verify ingestion
-python verify.py
+# For incremental updates
+python ingestion.py --incremental
 ```
 
-### 3. Search Your Knowledge Base
-
-```python
-# Interactive search
-python search.py
-
-# Test RAG responses
-python test_rag.py
-```
-
-### 4. Start the API Server
+### 3. Start the API Server
 
 ```bash
-# For Dify integration
-python dify_api.py
+# Start the FastAPI server
+python api.py
+
+# Custom port
+python api.py --port 8001
 
 # API will be available at http://localhost:8000
+# API documentation at http://localhost:8000/docs
 ```
 
-## Dify Integration
+### 4. Search Your Knowledge Base
 
-### Configure in Dify
-
-1. Go to Knowledge → External Knowledge
-2. Add new knowledge base with:
-
-```yaml
-Name: Telegram Knowledge Base
-Type: External API
-Endpoint: http://your-server:8000/retrieval
-Authentication: Bearer Token
-Token: your_api_key_from_env
-Knowledge ID: telegram-rag
-```
-
-### Test the Integration
-
+#### Interactive Testing
 ```bash
-curl -X POST http://localhost:8000/retrieval \
+# Test search functionality
+python test_rag.py
+
+# Run search tests
+python test_search.py
+```
+
+#### API Usage
+```bash
+# Search via API
+curl -X POST "http://localhost:8000/retrieval" \
   -H "Authorization: Bearer your_api_key" \
   -H "Content-Type: application/json" \
   -d '{
     "knowledge_id": "telegram-rag",
-    "query": "What has been discussed?",
+    "query": "What was discussed about the project?",
     "retrieval_setting": {
       "top_k": 5,
       "score_threshold": 0.5
@@ -208,11 +246,19 @@ curl -X POST http://localhost:8000/retrieval \
   }'
 ```
 
-## API Reference
+## 🔌 API Reference
+
+### Authentication
+
+All API endpoints require Bearer token authentication:
+
+```bash
+Authorization: Bearer your_api_key_from_env
+```
 
 ### Endpoints
 
-#### POST /retrieval
+#### POST `/retrieval`
 Retrieve relevant content from the knowledge base.
 
 **Request:**
@@ -232,25 +278,64 @@ Retrieve relevant content from the knowledge base.
 {
   "records": [
     {
-      "content": "Thread content",
+      "content": "[Thread with Alice, Bob - 3 messages]\n[2024-01-01 10:00:00] Alice: Hello...",
       "score": 0.95,
       "metadata": {
-        "thread_id": "thread_123",
+        "thread_id": "thread_20240101_100000",
         "participants": ["Alice", "Bob"],
-        "message_count": 5
+        "message_count": 3,
+        "timestamp": "2024-01-01T10:00:00Z"
       }
     }
   ]
 }
 ```
 
-#### GET /health
-Check API and database status.
+#### POST `/upload`
+Upload Telegram chat export files.
 
-#### GET /stats
+**Form Data:**
+- `file`: JSON file (required)
+- `chat_name`: Chat identifier (optional)
+- `merge`: Merge with existing data (optional, default: false)
+
+#### POST `/ingest`
+Trigger incremental data ingestion.
+
+**Request:**
+```json
+{
+  "incremental": true
+}
+```
+
+#### GET `/health`
+Check API and database health.
+
+#### GET `/stats`
 Get knowledge base statistics.
 
-## Architecture
+### Error Handling
+
+The API returns structured error responses:
+
+```json
+{
+  "detail": {
+    "error_code": 1002,
+    "error_message": "Authorization failed"
+  }
+}
+```
+
+Common error codes:
+- `1002`: Authorization failed
+- `1003`: Query cannot be empty
+- `2001`: Knowledge base does not exist
+- `4001-4003`: File upload errors
+- `5000`: Internal server error
+
+## 🏗️ Architecture
 
 ```
 ┌─────────────────┐     ┌──────────────┐     ┌─────────────┐
@@ -259,102 +344,169 @@ Get knowledge base statistics.
                                                      │
                                                      ▼
 ┌─────────────────┐     ┌──────────────┐     ┌─────────────┐
-│   Dify/Client   │◀────│   API Server │◀────│  Weaviate   │
-└─────────────────┘     └──────────────┘     └─────────────┘
+│   Client/Dify   │◀────│   FastAPI    │◀────│  Weaviate   │
+└─────────────────┘     │   Server     │     │  Database   │
+                        └──────────────┘     └─────────────┘
                                                      ▲
                                                      │
                                               ┌─────────────┐
-                                              │  Embeddings │
-                                              │  Provider   │
+                                              │  Embedding  │
+                                              │  Providers  │
                                               └─────────────┘
 ```
 
-## Project Structure
+### Key Components
 
-```
-telegram-rag/
-├── docker-compose.yml      # Complete stack deployment
-├── .env.example           # Environment template
-├── requirements.txt       # Python dependencies
-├── setup.py              # Automated setup script
-├── config.py             # Configuration management
-├── models.py             # Data models
-├── schema.py             # Weaviate schema
-├── thread_detector.py    # Message threading
-├── ingestion.py          # Data ingestion
-├── search.py             # Search interface
-├── dify_api.py          # Dify integration API
-├── providers/           # Embedding providers
-│   ├── base.py
-│   ├── ollama.py
-│   ├── openai.py
-│   └── openrouter.py
-├── utils/               # Utility functions
-│   ├── logging.py
-│   └── validation.py
-└── docs/                # Documentation
-    ├── SETUP.md
-    ├── API.md
-    └── TROUBLESHOOTING.md
-```
+- **Thread Detector**: Groups related messages using time windows and reply chains
+- **Embedding Providers**: Abstract interface supporting multiple AI services
+- **FastAPI Server**: Production-ready REST API with authentication
+- **Weaviate Database**: Vector database with hybrid search capabilities
+- **Data Models**: Pydantic V2 models for validation and serialization
 
-## Performance
+## 📊 Performance
 
-- **Ingestion Speed**: ~60 docs/second
+### Benchmarks
+- **Thread Detection**: ~1000 messages/second
+- **Embedding Generation**:
+  - OpenAI: ~50 docs/second
+  - Ollama: ~30 docs/second
 - **Search Latency**: <200ms
 - **API Response**: <500ms
-- **Storage**: ~10MB per 1000 threads
+- **Storage Efficiency**: ~10MB per 1000 threads
 - **Memory Usage**: 2-4GB during ingestion
 
-## Troubleshooting
+### Optimization Tips
+- Use `text-embedding-3-small` for best speed/quality balance
+- Increase `BATCH_SIZE` for faster ingestion (up to 200)
+- Use SSD storage for better Weaviate performance
+- Allocate 8GB+ RAM for large datasets (100k+ messages)
+
+## 🔧 Scripts and Tools
+
+### Management Scripts
+```bash
+# Setup everything
+./setup.sh
+
+# Stop all services
+./stop.sh
+
+# Check system readiness
+python quickstart_check_readiness.py
+
+# Clear all data
+python clear_data.py
+```
+
+### Development Tools
+```bash
+# Validate configuration
+python config.py
+
+# Manual schema setup
+python schema.py
+
+# Test RAG functionality
+python test_rag.py
+
+# Check system readiness
+python quickstart_check_readiness.py
+```
+
+## 🐛 Troubleshooting
 
 ### Common Issues
 
-#### Weaviate Connection Error
+#### 1. Weaviate Connection Error
 ```bash
 # Check if Weaviate is running
 docker ps | grep weaviate
 
 # Restart Weaviate
 docker-compose restart weaviate
+
+# Check logs
+docker-compose logs weaviate
 ```
 
-#### Embedding Provider Issues
+#### 2. API Authentication Fails
 ```bash
-# For Ollama
-ollama serve
-ollama pull nomic-embed-text
+# Verify API key in .env
+cat .env | grep API_KEY
 
-# For OpenAI/OpenRouter
-# Check API key and credits
+# Generate new API key
+openssl rand -hex 32
 ```
 
-#### Slow Performance
+#### 3. Embedding Provider Issues
+
+**For Ollama:**
+```bash
+# Start Ollama
+ollama serve
+
+# Pull required model
+ollama pull nomic-embed-text
+```
+
+**For OpenAI/OpenRouter:**
+- Verify API key is valid
+- Check account credits/usage limits
+- Ensure correct model names
+
+#### 4. Slow Performance
 - Reduce `BATCH_SIZE` in .env
 - Use faster embedding models
 - Increase Docker memory allocation
+- Use SSD storage
 
-See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for more solutions.
+#### 5. Memory Issues
+```bash
+# For large datasets, increase system memory
+# Or process in smaller batches
+export BATCH_SIZE=50
+python ingestion.py
+```
 
-## Contributing
+### Debug Mode
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Enable debug logging:
+```bash
+export LOG_LEVEL=DEBUG
+python api.py
+```
 
-## License
+## 🤝 Contributing
+
+We welcome contributions! Areas where help is needed:
+
+- **New embedding providers** (Cohere, Hugging Face, etc.)
+- **Performance optimizations**
+- **Additional chat export formats** (WhatsApp, Discord, etc.)
+- **UI/Frontend development**
+- **Documentation improvements**
+
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## 📄 License
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
-## Acknowledgments
+## 🙏 Acknowledgments
 
 - Built with [Weaviate](https://weaviate.io/) vector database
-- Supports [Dify](https://dify.ai/) integration
-- Compatible with [Ollama](https://ollama.ai/), OpenAI, and OpenRouter
+- Compatible with [Dify](https://dify.ai/) for AI workflow automation
+- Supports [Ollama](https://ollama.ai/), OpenAI, and OpenRouter
+- Inspired by the open-source RAG community
 
-## Support
+## 📞 Support
 
-- 📧 Email: maxim.a.savelyev@gmail.com
-- 🐛 Issues: [GitHub Issues](https://github.com/maksdizzy/telegram-rag/issues)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/maksdizzy/telegram-weaviate-rag/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/maksdizzy/telegram-weaviate-rag/discussions)
+- 📧 **Email**: maxim.a.savelyev@gmail.com
 
 ---
 
-Made with ❤️ for the RAG community
+**Made with ❤️ for the RAG community**
+
+⭐ **If this project helps you, please give it a star!** ⭐
