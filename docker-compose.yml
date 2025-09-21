@@ -1,0 +1,45 @@
+# Basic Docker Compose for Telegram RAG Knowledge Base
+# This includes only the essential Weaviate service
+
+version: '3.8'
+
+services:
+  # Weaviate Vector Database
+  weaviate:
+    image: cr.weaviate.io/semitechnologies/weaviate:1.32.9
+    command:
+      - --host
+      - 0.0.0.0
+      - --port
+      - '8080'
+      - --scheme
+      - http
+    ports:
+      - "8080:8080"     # REST API
+      - "50051:50051"   # gRPC
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      ENABLE_API_BASED_MODULES: 'true'
+      ENABLE_MODULES: 'text2vec-ollama,generative-ollama,text2vec-openai'
+      CLUSTER_HOSTNAME: 'node1'
+      # For Ollama integration (when using host.docker.internal)
+      OLLAMA_ENDPOINT: 'http://host.docker.internal:11434'
+      # Optional: OpenAI integration
+      # OPENAI_API_KEY: ${OPENAI_API_KEY}
+    restart: unless-stopped
+    networks:
+      - rag-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  weaviate_data:
+    driver: local
+
+networks:
+  rag-network:
+    driver: bridge

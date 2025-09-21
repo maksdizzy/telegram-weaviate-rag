@@ -1,0 +1,78 @@
+# Environment variables and secrets
+.env
+.env.local
+.env.production
+*.key
+*.pem
+*.crt
+
+# Python
+__pycache__/*
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Data files - exclude user data and backups
+result.json
+result.json.backup
+*.json.backup
+data/
+exports/
+backups/
+# But keep example files
+!.env.example
+!docker-compose*.yml
+!*.example.json
+
+# Logs
+*.log
+logs/
+nohup.out
+api.log
+uvicorn.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+*.tmp
+*.temp
+
+# Docker volumes and data
+weaviate_data/
+ollama_models/
+prometheus_data/
+grafana_data/
+
+# Test files
+test_*.json
+sample_*.json
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+*.whl
+
+# Temporary
+*.tmp
+temp/
+tmp/
+
+#docs
+claude_docs/

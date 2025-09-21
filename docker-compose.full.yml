@@ -1,0 +1,151 @@
+# Complete Docker Compose for Telegram RAG Knowledge Base
+# This includes all services needed for the full stack
+
+version: '3.8'
+
+services:
+  # Weaviate Vector Database
+  weaviate:
+    image: cr.weaviate.io/semitechnologies/weaviate:1.32.9
+    command:
+      - --host
+      - 0.0.0.0
+      - --port
+      - '8080'
+      - --scheme
+      - http
+    ports:
+      - "8080:8080"     # REST API
+      - "50051:50051"   # gRPC
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      ENABLE_API_BASED_MODULES: 'true'
+      ENABLE_MODULES: 'text2vec-ollama,generative-ollama,text2vec-openai'
+      CLUSTER_HOSTNAME: 'node1'
+      # For Ollama integration (when using host.docker.internal)
+      OLLAMA_ENDPOINT: 'http://host.docker.internal:11434'
+      # Optional: OpenAI integration
+      # OPENAI_API_KEY: ${OPENAI_API_KEY}
+    restart: unless-stopped
+    networks:
+      - rag-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Ollama (optional - for local embeddings)
+  # Uncomment if you want Ollama in Docker instead of host
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama_models:/root/.ollama
+  #   environment:
+  #     OLLAMA_HOST: 0.0.0.0
+  #   networks:
+  #     - rag-network
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         memory: 4G
+
+  # Telegram RAG API Server
+  rag-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      # Weaviate connection
+      WEAVIATE_HOST: weaviate
+      WEAVIATE_PORT: 8080
+      WEAVIATE_SCHEME: http
+      # Provider settings (from .env)
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-ollama}
+      # Ollama settings
+      OLLAMA_HOST: ${OLLAMA_HOST:-host.docker.internal}
+      OLLAMA_PORT: ${OLLAMA_PORT:-11434}
+      OLLAMA_EMBED_MODEL: ${OLLAMA_EMBED_MODEL:-nomic-embed-text}
+      OLLAMA_GENERATION_MODEL: ${OLLAMA_GENERATION_MODEL:-llama3.2}
+      # OpenAI settings (optional)
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_EMBED_MODEL: ${OPENAI_EMBED_MODEL:-text-embedding-3-small}
+      # OpenRouter settings (optional)
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      # Application settings
+      BATCH_SIZE: ${BATCH_SIZE:-100}
+      COLLECTION_NAME: ${COLLECTION_NAME:-TelegramMessages}
+      # Dify API settings
+      DIFY_API_KEY: ${DIFY_API_KEY:-change_me_in_production}
+      DIFY_KNOWLEDGE_ID: ${DIFY_KNOWLEDGE_ID:-telegram-rag}
+    volumes:
+      - ./result.json:/app/result.json:ro  # Mount Telegram export
+      - ./logs:/app/logs                    # Persist logs
+    depends_on:
+      - weaviate
+    restart: unless-stopped
+    networks:
+      - rag-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Nginx Reverse Proxy (optional - for production)
+  # nginx:
+  #   image: nginx:alpine
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./certs:/etc/nginx/certs:ro
+  #   depends_on:
+  #     - rag-api
+  #   networks:
+  #     - rag-network
+
+  # Monitoring - Prometheus (optional)
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  #     - prometheus_data:/prometheus
+  #   command:
+  #     - '--config.file=/etc/prometheus/prometheus.yml'
+  #     - '--storage.tsdb.path=/prometheus'
+  #   networks:
+  #     - rag-network
+
+  # Monitoring - Grafana (optional)
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - grafana_data:/var/lib/grafana
+  #   environment:
+  #     - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+  #   depends_on:
+  #     - prometheus
+  #   networks:
+  #     - rag-network
+
+volumes:
+  weaviate_data:
+    driver: local
+  ollama_models:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  rag-network:
+    driver: bridge
