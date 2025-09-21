@@ -165,6 +165,125 @@ SEARCH_LIMIT=5
 | **Ollama** | nomic-embed-text, mxbai-embed-large | Free | Fast | Good | Great for local/private use |
 | **OpenRouter** | Multiple providers | Paid | Variable | Variable | Good for experimentation |
 
+### Setting Up Ollama (Free Local Option)
+
+Ollama provides free, local embeddings without sending data to external services:
+
+#### 1. Install Ollama
+
+**On macOS:**
+```bash
+# Download from https://ollama.ai or use brew
+brew install ollama
+```
+
+**On Linux:**
+```bash
+# Install script
+curl -fsSL https://ollama.ai/install.sh | sh
+```
+
+**On Windows:**
+```bash
+# Download from https://ollama.ai/download/windows
+# Or use winget
+winget install Ollama.Ollama
+```
+
+#### 2. Start Ollama Service
+
+```bash
+# Start Ollama server
+ollama serve
+
+# Or start as background service
+ollama serve &
+```
+
+#### 3. Download Required Models
+
+```bash
+# For embeddings (required)
+ollama pull nomic-embed-text
+
+# Alternative embedding model (higher quality, larger)
+ollama pull mxbai-embed-large
+
+# For text generation (optional)
+ollama pull llama3.2
+
+# Check downloaded models
+ollama list
+```
+
+#### 4. Configure Environment
+
+Update your `.env` file:
+```env
+EMBEDDING_PROVIDER=ollama
+OLLAMA_HOST=localhost
+OLLAMA_PORT=11434
+OLLAMA_EMBED_MODEL=nomic-embed-text
+OLLAMA_GENERATION_MODEL=llama3.2
+```
+
+#### 5. Test Ollama Setup
+
+```bash
+# Test if Ollama is running
+curl http://localhost:11434/api/tags
+
+# Test embedding generation
+ollama run nomic-embed-text "test embedding"
+
+# Verify in our system
+python config.py
+```
+
+#### Recommended Ollama Models
+
+**For Embeddings:**
+- `nomic-embed-text` (274MB) - Fast, good quality, recommended
+- `mxbai-embed-large` (669MB) - Higher quality, slower
+- `all-minilm:l6-v2` (91MB) - Fastest, lower quality
+
+**For Text Generation:**
+- `llama3.2` (2GB) - Good balance of speed and quality
+- `llama3.2:1b` (1.3GB) - Fastest, smaller model
+- `mistral` (4.1GB) - Higher quality, slower
+
+#### Troubleshooting Ollama
+
+**Ollama Not Starting:**
+```bash
+# Check if service is running
+ps aux | grep ollama
+
+# Restart Ollama
+pkill ollama
+ollama serve
+
+# Check logs
+ollama logs
+```
+
+**Model Download Issues:**
+```bash
+# Clear cache and retry
+rm -rf ~/.ollama/models/blobs/*
+ollama pull nomic-embed-text
+
+# Check available disk space
+df -h ~/.ollama
+```
+
+**Memory Issues:**
+```bash
+# Use smaller models for limited RAM
+ollama pull nomic-embed-text  # Uses ~1GB RAM
+# Instead of mxbai-embed-large  # Uses ~2GB RAM
+```
+
 ## 📖 Usage
 
 ### 1. Prepare Your Telegram Data
@@ -442,17 +561,34 @@ openssl rand -hex 32
 
 **For Ollama:**
 ```bash
-# Start Ollama
+# Check if Ollama is running
+curl http://localhost:11434/api/tags
+
+# Start Ollama if not running
 ollama serve
 
-# Pull required model
+# Pull required embedding model
 ollama pull nomic-embed-text
+
+# List available models
+ollama list
+
+# Test model directly
+ollama run nomic-embed-text "test text"
+
+# Check system resources
+ollama ps
 ```
 
 **For OpenAI/OpenRouter:**
 - Verify API key is valid
 - Check account credits/usage limits
 - Ensure correct model names
+- Test API connectivity:
+```bash
+curl -H "Authorization: Bearer your_api_key" \
+  https://api.openai.com/v1/models
+```
 
 #### 4. Slow Performance
 - Reduce `BATCH_SIZE` in .env
