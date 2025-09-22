@@ -25,6 +25,7 @@ from pathlib import Path
 import json
 import shutil
 import tempfile
+from datetime import datetime
 
 app = FastAPI(
     title="Telegram RAG Knowledge Base API",
@@ -98,6 +99,45 @@ class UploadResponse(BaseModel):
     size: int = Field(description="File size in bytes")
     mode: str = Field(description="Upload mode: replace or merge")
     total_messages: int = Field(description="Total messages after upload")
+
+
+class ProcessResponse(BaseModel):
+    """Response format for complete upload + processing"""
+    status: str = Field(description="Status of the operation")
+    message: str = Field(description="Operation details")
+    knowledge_id: str = Field(description="Knowledge base identifier")
+    uploaded: Dict[str, Any] = Field(description="Upload details")
+    processed: Dict[str, Any] = Field(description="Processing details")
+
+
+class KnowledgeBaseInfo(BaseModel):
+    """Information about a knowledge base"""
+    knowledge_id: str = Field(description="Knowledge base identifier")
+    description: Optional[str] = Field(default=None, description="Knowledge base description")
+    total_threads: int = Field(description="Number of conversation threads")
+    total_messages: int = Field(description="Number of messages")
+    participants: List[str] = Field(description="List of participants")
+    date_range: Dict[str, str] = Field(description="Date range of messages")
+    storage_size: str = Field(description="Storage size")
+    last_updated: str = Field(description="Last update timestamp")
+
+
+class KnowledgeBaseStats(BaseModel):
+    """Statistics for a knowledge base"""
+    knowledge_id: str = Field(description="Knowledge base identifier")
+    collection_exists: bool = Field(description="Whether the collection exists in Weaviate")
+    total_documents: int = Field(description="Total documents in collection")
+    total_threads: int = Field(description="Number of conversation threads")
+    total_messages: int = Field(description="Number of messages")
+    participants: List[str] = Field(description="List of participants")
+    date_range: Dict[str, Optional[str]] = Field(description="Date range of messages")
+    last_updated: Optional[str] = Field(default=None, description="Last update timestamp")
+
+
+class CreateKnowledgeBaseRequest(BaseModel):
+    """Request to create a new knowledge base"""
+    knowledge_id: str = Field(description="Unique identifier for the knowledge base")
+    description: Optional[str] = Field(default=None, description="Description of the knowledge base")
 
 
 def verify_api_key(credentials: HTTPAuthorizationCredentials = Depends(security)) -> bool:
@@ -473,6 +513,256 @@ async def trigger_ingestion(
         )
 
 
+@app.post("/process", response_model=ProcessResponse)
+async def process_telegram_data(
+    file: UploadFile = File(...),
+    knowledge_id: str = KNOWLEDGE_ID,
+    merge: bool = False,
+    chat_name: Optional[str] = None,
+    incremental: bool = True,
+    authorized: bool = Depends(verify_api_key)
+) -> ProcessResponse:
+    """
+    Complete workflow: Upload + Process Telegram data in one step
+
+    This is the main endpoint that combines upload and ingestion into a single operation.
+    """
+    try:
+        console.print(f"[cyan]Processing Telegram data for knowledge base: {knowledge_id}[/cyan]")
+
+        # Step 1: Upload (reuse existing upload logic)
+        upload_response = await upload_telegram_export(file, merge, chat_name, authorized)
+
+        # Step 2: Trigger ingestion automatically
+        ingest_request = IngestionRequest(incremental=incremental, force=False)
+        ingest_response = await trigger_ingestion(ingest_request, authorized)
+
+        return ProcessResponse(
+            status="success",
+            message=f"Successfully processed {file.filename} for knowledge base '{knowledge_id}'",
+            knowledge_id=knowledge_id,
+            uploaded={
+                "filename": upload_response.filename,
+                "mode": upload_response.mode,
+                "total_messages": upload_response.total_messages,
+                "size": upload_response.size
+            },
+            processed={
+                "status": ingest_response.status,
+                "message": ingest_response.message,
+                "processed_threads": ingest_response.processed_threads
+            }
+        )
+
+    except Exception as e:
+        console.print(f"[red]Error during processing: {e}[/red]")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=ErrorResponse(
+                error_code=5010,
+                error_message=f"Processing failed: {str(e)}"
+            ).model_dump()
+        )
+
+
+@app.get("/knowledge-bases", response_model=List[KnowledgeBaseStats])
+async def list_knowledge_bases(authorized: bool = Depends(verify_api_key)) -> List[KnowledgeBaseStats]:
+    """List all available knowledge bases"""
+    try:
+        # For now, return the current knowledge base
+        # In the future, this would scan for multiple collections
+
+        # Connect to Weaviate
+        client = weaviate.connect_to_local(
+            host=settings.weaviate_host,
+            port=settings.weaviate_port,
+            grpc_port=50051
+        )
+
+        try:
+            collection_name = settings.collection_name
+            collection_exists = client.collections.exists(collection_name)
+
+            if not collection_exists:
+                return []
+
+            # Get basic stats for the knowledge base
+            basic_stats = KnowledgeBaseStats(
+                knowledge_id=KNOWLEDGE_ID,
+                collection_exists=True,
+                total_documents=0,
+                total_threads=0,
+                total_messages=0,
+                participants=[],
+                date_range={"start": None, "end": None},
+                last_updated=datetime.now().isoformat()
+            )
+
+            return [basic_stats]
+
+        finally:
+            client.close()
+
+    except Exception as e:
+        console.print(f"[red]Error listing knowledge bases: {e}[/red]")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=ErrorResponse(
+                error_code=5020,
+                error_message=f"Failed to list knowledge bases: {str(e)}"
+            ).model_dump()
+        )
+
+
+@app.get("/knowledge-bases/{knowledge_id}/stats", response_model=KnowledgeBaseStats)
+async def get_knowledge_base_stats(
+    knowledge_id: str,
+    authorized: bool = Depends(verify_api_key)
+) -> KnowledgeBaseStats:
+    """Get detailed statistics for a specific knowledge base"""
+    try:
+        console.print(f"[cyan]Getting stats for knowledge base: {knowledge_id}[/cyan]")
+
+        # Connect to Weaviate
+        client = weaviate.connect_to_local(
+            host=settings.weaviate_host,
+            port=settings.weaviate_port,
+            grpc_port=50051
+        )
+
+        try:
+            # Check if collection exists
+            collection_name = settings.collection_name
+            collection_exists = client.collections.exists(collection_name)
+
+            if not collection_exists:
+                return KnowledgeBaseStats(
+                    knowledge_id=knowledge_id,
+                    collection_exists=False,
+                    total_documents=0,
+                    total_threads=0,
+                    total_messages=0,
+                    participants=[],
+                    date_range={"start": None, "end": None},
+                    last_updated=None
+                )
+
+            collection = client.collections.get(collection_name)
+
+            # Get total document count
+            result = collection.aggregate.over_all(total_count=True)
+            total_documents = result.total_count or 0
+
+            # Get sample data for statistics
+            sample_results = collection.query.fetch_objects(
+                limit=100,
+                return_properties=["participants", "message_count", "timestamp"]
+            )
+
+            # Calculate statistics
+            all_participants = set()
+            total_messages = 0
+            dates = []
+
+            for obj in sample_results.objects:
+                props = obj.properties
+                if props.get('participants'):
+                    all_participants.update(props['participants'])
+                if props.get('message_count'):
+                    total_messages += props['message_count']
+                if props.get('timestamp'):
+                    dates.append(props['timestamp'])
+
+            # Estimate total messages (extrapolate from sample)
+            if len(sample_results.objects) > 0 and total_documents > 100:
+                avg_messages_per_thread = total_messages / len(sample_results.objects)
+                total_messages = int(avg_messages_per_thread * total_documents)
+
+            date_range = {"start": None, "end": None}
+            if dates:
+                dates.sort()
+                # Convert datetime objects to strings if needed
+                start_date = dates[0]
+                end_date = dates[-1]
+                if hasattr(start_date, 'isoformat'):
+                    start_date = start_date.isoformat()
+                if hasattr(end_date, 'isoformat'):
+                    end_date = end_date.isoformat()
+                date_range = {"start": start_date, "end": end_date}
+
+            return KnowledgeBaseStats(
+                knowledge_id=knowledge_id,
+                collection_exists=True,
+                total_documents=total_documents,
+                total_threads=total_documents,  # Each document is a thread
+                total_messages=total_messages,
+                participants=sorted(list(all_participants)),
+                date_range=date_range,
+                last_updated=datetime.now().isoformat()
+            )
+
+        finally:
+            client.close()
+
+    except Exception as e:
+        console.print(f"[red]Error getting stats: {e}[/red]")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=ErrorResponse(
+                error_code=5021,
+                error_message=f"Failed to get stats: {str(e)}"
+            ).model_dump()
+        )
+
+
+@app.delete("/knowledge-bases/{knowledge_id}")
+async def delete_knowledge_base(
+    knowledge_id: str,
+    authorized: bool = Depends(verify_api_key)
+):
+    """Delete a knowledge base (clears all data)"""
+    try:
+        console.print(f"[cyan]Deleting knowledge base: {knowledge_id}[/cyan]")
+
+        # Connect to Weaviate and delete collection
+        client = weaviate.connect_to_local(
+            host=settings.weaviate_host,
+            port=settings.weaviate_port,
+            grpc_port=50051
+        )
+
+        try:
+            collection_name = settings.collection_name
+            if client.collections.exists(collection_name):
+                client.collections.delete(collection_name)
+                console.print(f"[green]Deleted collection: {collection_name}[/green]")
+
+            # Also delete the local result.json file
+            result_file = Path(__file__).parent / "result.json"
+            if result_file.exists():
+                result_file.unlink()
+                console.print(f"[green]Deleted result.json file[/green]")
+
+            return {
+                "status": "success",
+                "message": f"Knowledge base '{knowledge_id}' deleted successfully",
+                "knowledge_id": knowledge_id
+            }
+
+        finally:
+            client.close()
+
+    except Exception as e:
+        console.print(f"[red]Error deleting knowledge base: {e}[/red]")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=ErrorResponse(
+                error_code=5022,
+                error_message=f"Failed to delete knowledge base: {str(e)}"
+            ).model_dump()
+        )
+
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
@@ -486,12 +776,16 @@ async def root():
         "message": "Telegram RAG Knowledge Base API",
         "knowledge_id": KNOWLEDGE_ID,
         "endpoints": {
+            "process": "/process (NEW - Upload + Process in one step)",
             "retrieval": "/retrieval",
-            "upload": "/upload",
-            "ingest": "/ingest",
+            "knowledge_bases": "/knowledge-bases",
+            "stats": "/knowledge-bases/{knowledge_id}/stats",
+            "upload": "/upload (Legacy - use /process instead)",
+            "ingest": "/ingest (Legacy - use /process instead)",
             "health": "/health",
             "docs": "/docs"
-        }
+        },
+        "recommended_workflow": "Use /process for uploading new data, /retrieval for searching, /knowledge-bases/{id}/stats for monitoring"
     }
 
 

@@ -1,0 +1,88 @@
+{
+  "name": "Test Chat - Valid Export",
+  "type": "personal_chat",
+  "id": 987654321,
+  "messages": [
+    {
+      "id": 1001,
+      "type": "message",
+      "date": "2024-01-15T09:00:00Z",
+      "from": "Alice",
+      "from_id": "user001",
+      "text": "Good morning! How are you today?"
+    },
+    {
+      "id": 1002,
+      "type": "message",
+      "date": "2024-01-15T09:01:30Z",
+      "from": "Bob",
+      "from_id": "user002",
+      "text": "I'm doing great, thanks! Just finished my morning coffee.",
+      "reply_to_message_id": 1001
+    },
+    {
+      "id": 1003,
+      "type": "message",
+      "date": "2024-01-15T09:03:00Z",
+      "from": "Alice",
+      "from_id": "user001",
+      "text": "That sounds wonderful. I love starting the day with a good cup of coffee too."
+    },
+    {
+      "id": 1004,
+      "type": "message",
+      "date": "2024-01-15T09:05:00Z",
+      "from": "Charlie",
+      "from_id": "user003",
+      "text": "Speaking of coffee, has anyone tried that new cafe downtown?"
+    },
+    {
+      "id": 1005,
+      "type": "message",
+      "date": "2024-01-15T09:06:15Z",
+      "from": "Bob",
+      "from_id": "user002",
+      "text": "Yes! I went there yesterday. Their espresso is amazing."
+    },
+    {
+      "id": 1006,
+      "type": "message",
+      "date": "2024-01-15T09:07:30Z",
+      "from": "Alice",
+      "from_id": "user001",
+      "text": "I'll have to check it out this weekend then!"
+    },
+    {
+      "id": 1007,
+      "type": "message",
+      "date": "2024-01-15T14:30:00Z",
+      "from": "Charlie",
+      "from_id": "user003",
+      "text": "By the way, are we still meeting for lunch tomorrow?"
+    },
+    {
+      "id": 1008,
+      "type": "message",
+      "date": "2024-01-15T14:31:00Z",
+      "from": "Bob",
+      "from_id": "user002",
+      "text": "Yes, let's meet at 12:30 PM at the usual place."
+    },
+    {
+      "id": 1009,
+      "type": "message",
+      "date": "2024-01-15T14:32:00Z",
+      "from": "Alice",
+      "from_id": "user001",
+      "text": "Perfect! See you both there."
+    },
+    {
+      "id": 1010,
+      "type": "message",
+      "date": "2024-01-15T18:45:00Z",
+      "from": "Bob",
+      "from_id": "user002",
+      "text": "Had a great day at work today. How about you guys?"
+    }
+  ]
+}

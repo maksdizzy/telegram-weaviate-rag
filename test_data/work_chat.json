@@ -1,0 +1,63 @@
+{
+  "name": "Work Team Chat",
+  "type": "group",
+  "id": 444555666,
+  "messages": [
+    {
+      "id": 601,
+      "type": "message",
+      "date": "2024-01-12T09:00:00Z",
+      "from": "ProjectManager",
+      "from_id": "work001",
+      "text": "Good morning team! Let's discuss today's sprint goals."
+    },
+    {
+      "id": 602,
+      "type": "message",
+      "date": "2024-01-12T09:01:00Z",
+      "from": "Developer1",
+      "from_id": "work002",
+      "text": "I finished the user authentication module yesterday."
+    },
+    {
+      "id": 603,
+      "type": "message",
+      "date": "2024-01-12T09:02:00Z",
+      "from": "Developer2",
+      "from_id": "work003",
+      "text": "Great! I'm working on the database optimization today."
+    },
+    {
+      "id": 604,
+      "type": "message",
+      "date": "2024-01-12T09:05:00Z",
+      "from": "Designer",
+      "from_id": "work004",
+      "text": "The new UI mockups are ready for review."
+    },
+    {
+      "id": 605,
+      "type": "message",
+      "date": "2024-01-12T09:06:00Z",
+      "from": "ProjectManager",
+      "from_id": "work001",
+      "text": "Excellent progress! Let's have a code review at 2 PM."
+    },
+    {
+      "id": 606,
+      "type": "message",
+      "date": "2024-01-12T14:00:00Z",
+      "from": "QA_Tester",
+      "from_id": "work005",
+      "text": "Found a few bugs in the payment module. Creating tickets now."
+    },
+    {
+      "id": 607,
+      "type": "message",
+      "date": "2024-01-12T14:01:00Z",
+      "from": "Developer1",
+      "from_id": "work002",
+      "text": "Thanks! I'll fix those after the code review."
+    }
+  ]
+}

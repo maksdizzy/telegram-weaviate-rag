@@ -1,0 +1,13 @@
+{
+  "title": "This is not a Telegram export",
+  "data": [
+    {
+      "entry": "Some random data",
+      "value": 123
+    }
+  ],
+  "metadata": {
+    "source": "random_application",
+    "version": "1.0"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "name": "Family Chat",
+  "type": "private_group",
+  "id": 111222333,
+  "messages": [
+    {
+      "id": 501,
+      "type": "message",
+      "date": "2024-01-10T19:00:00Z",
+      "from": "Mom",
+      "from_id": "family001",
+      "text": "Dinner is ready! Come to the kitchen."
+    },
+    {
+      "id": 502,
+      "type": "message",
+      "date": "2024-01-10T19:01:00Z",
+      "from": "Dad",
+      "from_id": "family002",
+      "text": "On my way! Smells delicious."
+    },
+    {
+      "id": 503,
+      "type": "message",
+      "date": "2024-01-10T19:02:00Z",
+      "from": "Sister",
+      "from_id": "family003",
+      "text": "I'll be there in 5 minutes."
+    },
+    {
+      "id": 504,
+      "type": "message",
+      "date": "2024-01-10T19:15:00Z",
+      "from": "Mom",
+      "from_id": "family001",
+      "text": "Don't forget we have the family reunion this weekend."
+    },
+    {
+      "id": 505,
+      "type": "message",
+      "date": "2024-01-10T19:16:00Z",
+      "from": "Dad",
+      "from_id": "family002",
+      "text": "I'll bring the barbecue equipment."
+    }
+  ]
+}

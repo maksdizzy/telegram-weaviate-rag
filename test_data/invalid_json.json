@@ -1,0 +1,11 @@
+{
+  "name": "Invalid JSON",
+  "type": "personal_chat",
+  "id": 123,
+  "messages": [
+    {
+      "id": 1,
+      "text": "This JSON is invalid",
+      "from": "TestUser"
+    // Missing closing bracket and comma issues
+  ]

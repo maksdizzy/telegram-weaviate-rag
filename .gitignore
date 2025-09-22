@@ -76,3 +76,4 @@ tmp/
 
 #docs
 claude_docs/
+.claude/
