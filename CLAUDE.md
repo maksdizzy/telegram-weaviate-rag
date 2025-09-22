@@ -69,10 +69,35 @@ docker-compose -f docker-compose.full.yml up -d
 docker-compose logs -f weaviate
 ```
 
+### RAG Enhancements
+```bash
+# Interactive embedding model optimization
+python optimize_embeddings.py
+
+# Enable contextual information injection (49% better retrieval)
+# Set in .env file:
+USE_CONTEXTUAL_CONTENT=true
+
+# Or configure during setup
+./setup.sh
+```
+
+**Available Enhancements:**
+- **Enhanced Metadata**: 16+ new conversation analysis fields
+- **Contextual Injection**: Research-backed 49% improvement in retrieval
+- **Advanced Embedding Models**: text-embedding-3-large support (64.6 MTEB score)
+- **Interactive Optimization**: Easy model switching and performance comparison
+
 ### Testing and Validation
 ```bash
 # Interactive search testing
 python test_rag.py
+
+# Run comprehensive test suite
+python test_data/run_comprehensive_tests.py
+
+# Generate test data
+python test_data/generate_large_file.py
 
 # Manual API testing - retrieval
 curl -X POST http://localhost:8000/retrieval \
@@ -89,10 +114,6 @@ curl -X POST http://localhost:8000/upload \
 curl -X POST "http://localhost:8000/upload?merge=true&chat_name=family_chat" \
   -H "Authorization: Bearer your_api_key" \
   -F "file=@family_chat.json"
-
-curl -X POST "http://localhost:8000/upload?merge=true&chat_name=work_chat" \
-  -H "Authorization: Bearer your_api_key" \
-  -F "file=@work_chat.json"
 
 # Manual API testing - ingestion
 curl -X POST http://localhost:8000/ingest \

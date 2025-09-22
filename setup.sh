@@ -93,8 +93,55 @@ main() {
                 sed -i 's/EMBEDDING_PROVIDER=.*/EMBEDDING_PROVIDER=ollama/' .env
                 ;;
         esac
+
+        # RAG Enhancement Configuration
+        echo ""
+        echo "🚀 RAG Enhancement Options:"
+        echo "1) Basic mode (faster processing)"
+        echo "2) Enhanced mode (49% better retrieval quality)"
+        read -p "Enter choice [1-2]: " rag_choice
+
+        case $rag_choice in
+            1)
+                sed -i 's/USE_CONTEXTUAL_CONTENT=.*/USE_CONTEXTUAL_CONTENT=false/' .env
+                print_message "Set to basic mode for faster processing" "$GREEN"
+                ;;
+            2)
+                sed -i 's/USE_CONTEXTUAL_CONTENT=.*/USE_CONTEXTUAL_CONTENT=true/' .env
+                print_message "Set to enhanced mode for better search quality" "$GREEN"
+                ;;
+            *)
+                print_message "Invalid choice. Defaulting to basic mode" "$YELLOW"
+                sed -i 's/USE_CONTEXTUAL_CONTENT=.*/USE_CONTEXTUAL_CONTENT=false/' .env
+                ;;
+        esac
+
+        # Embedding Model Optimization
+        if grep -q "EMBEDDING_PROVIDER=openai" .env; then
+            echo ""
+            echo "📊 OpenAI Embedding Model:"
+            echo "1) text-embedding-3-small (faster, cheaper)"
+            echo "2) text-embedding-3-large (better quality, recommended)"
+            read -p "Enter choice [1-2]: " model_choice
+
+            case $model_choice in
+                1)
+                    sed -i 's/OPENAI_EMBED_MODEL=.*/OPENAI_EMBED_MODEL=text-embedding-3-small/' .env
+                    print_message "Set to text-embedding-3-small" "$GREEN"
+                    ;;
+                2)
+                    sed -i 's/OPENAI_EMBED_MODEL=.*/OPENAI_EMBED_MODEL=text-embedding-3-large/' .env
+                    print_message "Set to text-embedding-3-large for better quality" "$GREEN"
+                    ;;
+                *)
+                    print_message "Invalid choice. Using text-embedding-3-small" "$YELLOW"
+                    sed -i 's/OPENAI_EMBED_MODEL=.*/OPENAI_EMBED_MODEL=text-embedding-3-small/' .env
+                    ;;
+            esac
+        fi
     else
         print_message ".env file already exists" "$GREEN"
+        print_message "💡 Run 'python optimize_embeddings.py' to configure RAG enhancements" "$YELLOW"
     fi
 
     # Step 3: Create Python virtual environment

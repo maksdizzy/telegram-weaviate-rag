@@ -134,6 +134,155 @@ class WeaviateSchema:
                 index_searchable=False,
                 skip_vectorization=True
             ),
+
+            # Enhanced metadata fields for better search quality
+            Property(
+                name="char_count",
+                data_type=DataType.INT,
+                description="Total character count",
+                index_filterable=True,
+                index_searchable=False,
+                skip_vectorization=True
+            ),
+            Property(
+                name="avg_message_length",
+                data_type=DataType.NUMBER,
+                description="Average message length",
+                index_filterable=True,
+                index_searchable=False,
+                skip_vectorization=True
+            ),
+            Property(
+                name="has_replies",
+                data_type=DataType.BOOL,
+                description="Contains reply messages",
+                index_filterable=True,
+                index_searchable=False,
+                skip_vectorization=True
+            ),
+            Property(
+                name="reply_count",
+                data_type=DataType.INT,
+                description="Number of replies",
+                index_filterable=True,
+                index_searchable=False,
+                skip_vectorization=True
+            ),
+            Property(
+                name="unique_senders",
+                data_type=DataType.INT,
+                description="Number of unique senders",
+                index_filterable=True,
+                index_searchable=False,
+                skip_vectorization=True
+            ),
+            Property(
+                name="has_media",
+                data_type=DataType.BOOL,
+                description="Contains media references",
+                index_filterable=True,
+                index_searchable=False,
+                skip_vectorization=True
+            ),
+            Property(
+                name="has_mentions",
+                data_type=DataType.BOOL,
+                description="Contains user mentions",
+                index_filterable=True,
+                index_searchable=False,
+                skip_vectorization=True
+            ),
+            Property(
+                name="has_hashtags",
+                data_type=DataType.BOOL,
+                description="Contains hashtags",
+                index_filterable=True,
+                index_searchable=False,
+                skip_vectorization=True
+            ),
+            Property(
+                name="has_exclamations",
+                data_type=DataType.BOOL,
+                description="Contains exclamation marks",
+                index_filterable=True,
+                index_searchable=False,
+                skip_vectorization=True
+            ),
+            Property(
+                name="conversation_density",
+                data_type=DataType.NUMBER,
+                description="Messages per minute",
+                index_filterable=True,
+                index_searchable=False,
+                skip_vectorization=True
+            ),
+            Property(
+                name="interaction_pattern",
+                data_type=DataType.TEXT,
+                description="Conversation pattern (single/dialogue/group)",
+                index_filterable=True,
+                index_searchable=False,
+                skip_vectorization=True
+            ),
+
+            # AI-powered analysis fields (placeholders for future implementation)
+            Property(
+                name="sentiment_score",
+                data_type=DataType.NUMBER,
+                description="Overall sentiment score (-1 to 1)",
+                index_filterable=True,
+                index_searchable=False,
+                skip_vectorization=True
+            ),
+            Property(
+                name="dominant_emotion",
+                data_type=DataType.TEXT,
+                description="Dominant emotion in conversation",
+                index_filterable=True,
+                index_searchable=False,
+                skip_vectorization=True
+            ),
+            Property(
+                name="conversation_type",
+                data_type=DataType.TEXT,
+                description="Type of conversation",
+                index_filterable=True,
+                index_searchable=False,
+                skip_vectorization=True
+            ),
+            Property(
+                name="urgency_level",
+                data_type=DataType.TEXT,
+                description="Urgency level assessment",
+                index_filterable=True,
+                index_searchable=False,
+                skip_vectorization=True
+            ),
+            Property(
+                name="topic_keywords",
+                data_type=DataType.TEXT_ARRAY,
+                description="Extracted topic keywords",
+                index_filterable=True,
+                index_searchable=False,
+                skip_vectorization=True
+            ),
+            Property(
+                name="extracted_entities",
+                data_type=DataType.TEXT_ARRAY,
+                description="Named entities",
+                index_filterable=True,
+                index_searchable=False,
+                skip_vectorization=True
+            ),
+            Property(
+                name="resolution_status",
+                data_type=DataType.TEXT,
+                description="Conversation resolution status",
+                index_filterable=True,
+                index_searchable=False,
+                skip_vectorization=True
+            ),
+
             Property(
                 name="raw_messages",
                 data_type=DataType.TEXT,

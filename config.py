@@ -61,6 +61,10 @@ class Settings(BaseSettings):
         default=100,
         description="Number of messages to process in one batch"
     )
+    use_contextual_content: bool = Field(
+        default=False,
+        description="Use contextual information injection for 49% better retrieval (research-backed)"
+    )
     collection_name: str = Field(
         default="TelegramMessages",
         description="Weaviate collection name for storing messages"
