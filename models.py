@@ -135,13 +135,44 @@ class MessageThread(BaseModel):
     def get_thread_summary(self) -> Dict[str, Any]:
         """
         Create a summary of the thread for metadata.
+        Enhanced with research-recommended fields for better RAG performance.
         """
+        # Basic conversation analysis
+        text_messages = [msg.text for msg in self.messages if msg.text and msg.type.value == "message"]
+        all_text = " ".join(text_messages)
+
+        # Enhanced metadata based on research recommendations
         return {
+            # Existing fields
             "duration_seconds": (self.end_time - self.start_time).total_seconds(),
             "participant_count": len(self.participants),
             "has_questions": any("?" in msg.text for msg in self.messages if msg.text),
             "has_links": any("http" in msg.text for msg in self.messages if msg.text),
             "message_types": list(set(msg.type.value for msg in self.messages)),
+
+            # New enhanced fields for better search quality
+            "word_count": len(all_text.split()) if all_text else 0,
+            "char_count": len(all_text),
+            "avg_message_length": len(all_text) / len(text_messages) if text_messages else 0,
+            "has_replies": any(msg.reply_to_message_id for msg in self.messages),
+            "reply_count": sum(1 for msg in self.messages if msg.reply_to_message_id),
+            "unique_senders": len(set(msg.get_sender_name() for msg in self.messages)),
+            "has_media": any("photo" in msg.text.lower() or "video" in msg.text.lower() or "file" in msg.text.lower()
+                           for msg in self.messages if msg.text),
+            "has_mentions": any("@" in msg.text for msg in self.messages if msg.text),
+            "has_hashtags": any("#" in msg.text for msg in self.messages if msg.text),
+            "has_exclamations": any("!" in msg.text for msg in self.messages if msg.text),
+            "conversation_density": len(self.messages) / max((self.end_time - self.start_time).total_seconds() / 60, 1),  # messages per minute
+            "interaction_pattern": "single" if len(self.participants) == 1 else "dialogue" if len(self.participants) == 2 else "group",
+
+            # Placeholder fields for future AI-powered analysis
+            "sentiment_score": 0.0,  # Will be populated by sentiment analysis
+            "dominant_emotion": "neutral",  # Will be determined by emotion detection
+            "conversation_type": "general",  # Will be classified by AI (question, announcement, discussion, etc.)
+            "urgency_level": "normal",  # Will be determined by urgency detection
+            "topic_keywords": [],  # Will be populated by topic extraction
+            "extracted_entities": [],  # Will be populated by NER
+            "resolution_status": "unknown",  # Will be determined by conversation analysis
         }
 
     @classmethod
@@ -187,6 +218,28 @@ class WeaviateDocument(BaseModel):
     has_links: bool = Field(..., description="Contains URLs")
     word_count: int = Field(..., description="Total word count")
 
+    # Enhanced metadata fields for better search quality
+    char_count: int = Field(default=0, description="Total character count")
+    avg_message_length: float = Field(default=0.0, description="Average message length")
+    has_replies: bool = Field(default=False, description="Contains reply messages")
+    reply_count: int = Field(default=0, description="Number of replies")
+    unique_senders: int = Field(default=1, description="Number of unique senders")
+    has_media: bool = Field(default=False, description="Contains media references")
+    has_mentions: bool = Field(default=False, description="Contains user mentions")
+    has_hashtags: bool = Field(default=False, description="Contains hashtags")
+    has_exclamations: bool = Field(default=False, description="Contains exclamation marks")
+    conversation_density: float = Field(default=0.0, description="Messages per minute")
+    interaction_pattern: str = Field(default="single", description="Conversation pattern (single/dialogue/group)")
+
+    # AI-powered analysis fields (placeholders for future implementation)
+    sentiment_score: float = Field(default=0.0, description="Overall sentiment score (-1 to 1)")
+    dominant_emotion: str = Field(default="neutral", description="Dominant emotion in conversation")
+    conversation_type: str = Field(default="general", description="Type of conversation")
+    urgency_level: str = Field(default="normal", description="Urgency level assessment")
+    topic_keywords: List[str] = Field(default_factory=list, description="Extracted topic keywords")
+    extracted_entities: List[str] = Field(default_factory=list, description="Named entities")
+    resolution_status: str = Field(default="unknown", description="Conversation resolution status")
+
     # Original messages (for reference)
     raw_messages: List[Dict[str, Any]] = Field(..., description="Original message data")
 
@@ -210,7 +263,30 @@ class WeaviateDocument(BaseModel):
             has_service_messages="service" in summary["message_types"],
             has_questions=summary["has_questions"],
             has_links=summary["has_links"],
-            word_count=len(content.split()),
+            word_count=summary["word_count"],
+
+            # Enhanced metadata fields
+            char_count=summary["char_count"],
+            avg_message_length=summary["avg_message_length"],
+            has_replies=summary["has_replies"],
+            reply_count=summary["reply_count"],
+            unique_senders=summary["unique_senders"],
+            has_media=summary["has_media"],
+            has_mentions=summary["has_mentions"],
+            has_hashtags=summary["has_hashtags"],
+            has_exclamations=summary["has_exclamations"],
+            conversation_density=summary["conversation_density"],
+            interaction_pattern=summary["interaction_pattern"],
+
+            # AI-powered analysis fields (with defaults from summary)
+            sentiment_score=summary["sentiment_score"],
+            dominant_emotion=summary["dominant_emotion"],
+            conversation_type=summary["conversation_type"],
+            urgency_level=summary["urgency_level"],
+            topic_keywords=summary["topic_keywords"],
+            extracted_entities=summary["extracted_entities"],
+            resolution_status=summary["resolution_status"],
+
             raw_messages=[msg.model_dump() for msg in thread.messages]
         )
 
@@ -234,6 +310,29 @@ class WeaviateDocument(BaseModel):
             "has_questions": self.has_questions,
             "has_links": self.has_links,
             "word_count": self.word_count,
+
+            # Enhanced metadata fields
+            "char_count": self.char_count,
+            "avg_message_length": self.avg_message_length,
+            "has_replies": self.has_replies,
+            "reply_count": self.reply_count,
+            "unique_senders": self.unique_senders,
+            "has_media": self.has_media,
+            "has_mentions": self.has_mentions,
+            "has_hashtags": self.has_hashtags,
+            "has_exclamations": self.has_exclamations,
+            "conversation_density": self.conversation_density,
+            "interaction_pattern": self.interaction_pattern,
+
+            # AI-powered analysis fields
+            "sentiment_score": self.sentiment_score,
+            "dominant_emotion": self.dominant_emotion,
+            "conversation_type": self.conversation_type,
+            "urgency_level": self.urgency_level,
+            "topic_keywords": self.topic_keywords,
+            "extracted_entities": self.extracted_entities,
+            "resolution_status": self.resolution_status,
+
             # Store raw messages as JSON string
             "raw_messages": str(self.raw_messages)
         }
